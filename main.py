@@ -34,7 +34,14 @@ for index, value in enumerate(defaulters['EDUCATION']):
     if (value == 5) | (value == 6) | (value ==0):
         defaulters['EDUCATION'][index]= 4
 
-print(defaulters['EDUCATION'].value_counts())
+# print(defaulters['EDUCATION'].value_counts())
+
+# Changing Marriage column so there are only 1 value representing 'other' instead of 4 value '0,3'
+for index, value in enumerate(defaulters['MARRIAGE']):
+    if value == 0:
+        defaulters['MARRIAGE'][index]= 3
+print(defaulters['MARRIAGE'].value_counts())
+
 
 
 
