@@ -13,6 +13,7 @@ from sklearn.linear_model import LogisticRegression, RidgeClassifier
 from sklearn.metrics import accuracy_score,classification_report,confusion_matrix,mean_squared_error
 import warnings
 warnings.filterwarnings('ignore')
+from imblearn.over_sampling import SMOTE
 
 data = pd.read_csv('UCI_Credit_Card.csv',delimiter=',')
 # print(data.shape)
@@ -91,6 +92,16 @@ pay_col = ['PAY_SEPT',	'PAY_AUG',	'PAY_JUL',	'PAY_JUN',	'PAY_MAY',	'PAY_APR']
 #     sns.countplot(data= defaulters, x=col, hue='def_pay')
 #     plt.show()
 
-pay_amnt_df = defaulters[['PAY_AMT_SEPT',	'PAY_AMT_AUG',	'PAY_AMT_JUL',	'PAY_AMT_JUN',	'PAY_AMT_MAY',	'PAY_AMT_APR', 'def_pay']]
-sns.pairplot(data= pay_amnt_df, hue='def_pay')
+# pay_amnt_df = defaulters[['PAY_AMT_SEPT',	'PAY_AMT_AUG',	'PAY_AMT_JUL',	'PAY_AMT_JUN',	'PAY_AMT_MAY',	'PAY_AMT_APR', 'def_pay']]
+# sns.pairplot(data= pay_amnt_df, hue='def_pay')
+# plt.show()
+
+# <----  remediate Imbalance using SMOTE(Synthetic Minority Oversampling Technique) ---->
+smote = SMOTE()
+x_smote, y_smote = smote.fit_resample(defaulters.iloc[:,0:-1], defaulters['def_pay'])
+print('Original dataset shape', len(defaulters))
+print('Resampled dataset shape', len(y_smote))
+balanced_df = pd.DataFrame(x_smote, columns= defaulters.columns.drop('def_pay'))
+balanced_df['def_pay']= y_smote
+sns.countplot(data= balanced_df, x='def_pay')
 plt.show()
