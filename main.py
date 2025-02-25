@@ -23,10 +23,18 @@ defaulters.rename(columns={'default.payment.next.month':'def_pay', 'PAY_0':'PAY_
 
 # <---- Visualizing the data ---->
 def_cnt = defaulters['def_pay'].value_counts(normalize=True)*100 # visualizing the Probability Of Defaulting Payment Next Month
-def_cnt.plot.bar()
-plt.title("Probability Of Defaulting Payment Next Month",fontsize= 15)
-for index, value in enumerate(def_cnt):# write the value of each bar on top of it
-    plt.text(index-0.1, value +0.25, str(value), fontsize = 12)
-plt.show()
+# def_cnt.plot.bar()
+# plt.title("Probability Of Defaulting Payment Next Month",fontsize= 15)
+# for index, value in enumerate(def_cnt):# write the value of each bar on top of it
+#     plt.text(index-0.1, value +0.25, str(value), fontsize = 12)
+# plt.show()
+
+# Changing Education column so there are only 1 value representing 'other' instead of 4 value '0,4,5,6'
+for index, value in enumerate(defaulters['EDUCATION']):
+    if (value == 5) | (value == 6) | (value ==0):
+        defaulters['EDUCATION'][index]= 4
+
+print(defaulters['EDUCATION'].value_counts())
+
 
 
