@@ -51,13 +51,17 @@ df_cat = defaulters[categorical_features] # showing each value corresponding wit
 df_cat.replace({'SEX': {1 : 'MALE', 2 : 'FEMALE'}, 'EDUCATION' : {1 : 'graduate school', 2 : 'university', 3 : 'high school', 4 : 'others'}, 'MARRIAGE' : {1 : 'married', 2 : 'single', 3 : 'others'}}, inplace = True)
 df_cat['def_pay']= defaulters['def_pay'] # adding 'def_pay' column at the end of categorical dataframe
 
-for col in categorical_features:
-  fig, axes = plt.subplots(ncols=2, figsize=(13, 8))
-  defaulters[col].value_counts().plot(kind="pie", ax= axes[0],subplots=True)
-  print(axes[0])
-  sns.countplot(x = col, hue = 'def_pay', ax= axes[1], data = df_cat)
-  plt.show()
+# for col in categorical_features:
+#   fig, axes = plt.subplots(ncols=2, figsize=(13, 8))
+#   defaulters[col].value_counts().plot(kind="pie", ax= axes[0],subplots=True)
+#   sns.countplot(x = col, hue = 'def_pay', ax= axes[1], data = df_cat)
+#   plt.show()
 
+# <---- Visualizing the relation between amount of credit and paying ---->
+fig , axes = plt.subplots(ncols=2, figsize= (13,8))
+sns.barplot(data=defaulters, x= 'def_pay', ax= axes[0], y='LIMIT_BAL')
+sns.boxplot(data= defaulters,x='def_pay', ax=axes[1],y='LIMIT_BAL')
+plt.show()
 
 
 
