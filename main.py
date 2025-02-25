@@ -77,7 +77,12 @@ age_counts = age_counts.sort_values("AGE")
 # plt.show()
 
 # <---- Visualize relation between age and paying credit ---->
-sns.boxplot(data= defaulters, x='def_pay', y='AGE')
+# sns.boxplot(data= defaulters, x='def_pay', y='AGE')
+# plt.show()
+
+# <---- Visualizing the relation between amount of bills ---->
+bill_amnt_df = defaulters[['BILL_AMT_SEPT',	'BILL_AMT_AUG',	'BILL_AMT_JUL',	'BILL_AMT_JUN',	'BILL_AMT_MAY',	'BILL_AMT_APR']]
+sns.pairplot(data= bill_amnt_df)
 plt.show()
 
 
