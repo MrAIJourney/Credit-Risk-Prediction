@@ -61,7 +61,12 @@ df_cat['def_pay']= defaulters['def_pay'] # adding 'def_pay' column at the end of
 fig , axes = plt.subplots(ncols=2, figsize= (13,8))
 sns.barplot(data=defaulters, x= 'def_pay', ax= axes[0], y='LIMIT_BAL')
 sns.boxplot(data= defaulters,x='def_pay', ax=axes[1],y='LIMIT_BAL')
-plt.show()
+# plt.show()
+
+# <---- renaming the columns names for better understanding ---->
+defaulters.rename(columns={'PAY_1':'PAY_SEPT','PAY_2':'PAY_AUG','PAY_3':'PAY_JUL','PAY_4':'PAY_JUN','PAY_5':'PAY_MAY','PAY_6':'PAY_APR'},inplace=True)
+defaulters.rename(columns={'BILL_AMT1':'BILL_AMT_SEPT','BILL_AMT2':'BILL_AMT_AUG','BILL_AMT3':'BILL_AMT_JUL','BILL_AMT4':'BILL_AMT_JUN','BILL_AMT5':'BILL_AMT_MAY','BILL_AMT6':'BILL_AMT_APR'}, inplace = True)
+defaulters.rename(columns={'PAY_AMT1':'PAY_AMT_SEPT','PAY_AMT2':'PAY_AMT_AUG','PAY_AMT3':'PAY_AMT_JUL','PAY_AMT4':'PAY_AMT_JUN','PAY_AMT5':'PAY_AMT_MAY','PAY_AMT6':'PAY_AMT_APR'},inplace=True)
 
 
 
