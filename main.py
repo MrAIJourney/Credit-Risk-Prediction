@@ -82,10 +82,15 @@ age_counts = age_counts.sort_values("AGE")
 
 # <---- Visualizing the relation between amount of bills ---->
 bill_amnt_df = defaulters[['BILL_AMT_SEPT',	'BILL_AMT_AUG',	'BILL_AMT_JUL',	'BILL_AMT_JUN',	'BILL_AMT_MAY',	'BILL_AMT_APR']]
-sns.pairplot(data= bill_amnt_df)
+# sns.pairplot(data= bill_amnt_df)
+# plt.show()
+
+# <---- Visualizing the amount of paying ---->
+pay_col = ['PAY_SEPT',	'PAY_AUG',	'PAY_JUL',	'PAY_JUN',	'PAY_MAY',	'PAY_APR']
+# for col in pay_col:
+#     sns.countplot(data= defaulters, x=col, hue='def_pay')
+#     plt.show()
+
+pay_amnt_df = defaulters[['PAY_AMT_SEPT',	'PAY_AMT_AUG',	'PAY_AMT_JUL',	'PAY_AMT_JUN',	'PAY_AMT_MAY',	'PAY_AMT_APR', 'def_pay']]
+sns.pairplot(data= pay_amnt_df, hue='def_pay')
 plt.show()
-
-
-
-
-
