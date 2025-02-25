@@ -71,10 +71,16 @@ defaulters.rename(columns={'PAY_AMT1':'PAY_AMT_SEPT','PAY_AMT2':'PAY_AMT_AUG','P
 # <---- Visualizing the amount of each age in data ---->
 age_counts = defaulters['AGE'].value_counts().reset_index()
 age_counts = age_counts.sort_values("AGE")
-defaulters['AGE'].value_counts().plot(kind='pie', ax=axes[0], subplots= True)
-sns.barplot(data=age_counts, x= 'AGE', y='count', ax=axes[1], hue='count', palette='PuOr' )
-axes[1].set_xticklabels(axes[1].get_xticks(), rotation = 90)
+# defaulters['AGE'].value_counts().plot(kind='pie', ax=axes[0], subplots= True)
+# sns.barplot(data=age_counts, x= 'AGE', y='count', ax=axes[1], hue='count', palette='PuOr' )
+# axes[1].set_xticklabels(axes[1].get_xticks(), rotation = 90)
+# plt.show()
+
+# <---- Visualize relation between age and paying credit ---->
+sns.boxplot(data= defaulters, x='def_pay', y='AGE')
 plt.show()
+
+
 
 
 
