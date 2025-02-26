@@ -8,7 +8,7 @@ import numpy as np # linear algebra
 import os # accessing directory structure
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 import seaborn as sns
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.linear_model import LogisticRegression, RidgeClassifier
 from sklearn.metrics import accuracy_score,classification_report,confusion_matrix,mean_squared_error
 import warnings
@@ -99,9 +99,38 @@ pay_col = ['PAY_SEPT',	'PAY_AUG',	'PAY_JUL',	'PAY_JUN',	'PAY_MAY',	'PAY_APR']
 # <----  remediate Imbalance using SMOTE(Synthetic Minority Oversampling Technique) ---->
 smote = SMOTE()
 x_smote, y_smote = smote.fit_resample(defaulters.iloc[:,0:-1], defaulters['def_pay'])
-print('Original dataset shape', len(defaulters))
-print('Resampled dataset shape', len(y_smote))
+# print('Original dataset shape', len(defaulters))
+# print('Resampled dataset shape', len(y_smote))
 balanced_df = pd.DataFrame(x_smote, columns= defaulters.columns.drop('def_pay'))
 balanced_df['def_pay']= y_smote
-sns.countplot(data= balanced_df, x='def_pay')
-plt.show()
+# sns.countplot(data= balanced_df, x='def_pay')
+# plt.show()
+
+# <---- Implementing Logistic Regression ---->
+balanced_df.drop('ID', axis=1, inplace=True)
+balanced_df['Payment_Value'] = balanced_df['PAY_SEPT'] + balanced_df['PAY_AUG'] + balanced_df['PAY_JUL'] + balanced_df['PAY_JUN'] + balanced_df['PAY_MAY'] + balanced_df['PAY_APR']
+balanced_df['Dues'] = (balanced_df['BILL_AMT_APR']+balanced_df['BILL_AMT_MAY']+balanced_df['BILL_AMT_JUN']+balanced_df['BILL_AMT_JUL']+balanced_df['BILL_AMT_SEPT'])-(balanced_df['PAY_AMT_APR']+balanced_df['PAY_AMT_MAY']+balanced_df['PAY_AMT_JUN']+balanced_df['PAY_AMT_JUL']+balanced_df['PAY_AMT_AUG']+balanced_df['PAY_AMT_SEPT'])
+df_x_values = balanced_df.drop(['def_pay','Payment_Value', 'Dues'], axis=1)
+df_y_value =balanced_df['def_pay']
+
+std_scaler = StandardScaler() # scale data using a standard scaler
+scaled_x_values = std_scaler.fit_transform(df_x_values)
+
+x_train, x_test, y_train, y_test = train_test_split(scaled_x_values, df_y_value, test_size=0.33, random_state=42, stratify=df_y_value)
+
+# <---- Findig the best parameters for model using "GridSearchCV" ---->
+model_params = {
+    'linear_regression':{
+        'model': LogisticRegression(),
+        'params':{
+            'penalty':['l1','l2'],
+            'C' : [0.001, 0.01, 0.1, 1, 10, 100, 1000]
+        }
+    }
+} # a dictionary that saves parameters for each model to be tested using "GridSearchCV"
+model_score = pd.DataFrame(columns=["Model Name","Best Score", "Best Params"]) # a dataframe to save score for each model based on parameters
+for model_name, mp in model_params.items():
+    clf = GridSearchCV(mp['model'], mp['params'],cv=3, scoring='accuracy', n_jobs=-1, verbose=3) # https://www.youtube.com/watch?v=HdlDYng8g9s and https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html
+    clf.fit(x_train, y_train)
+    model_score.loc[len(model_score)]= [model_name, clf.best_score_, clf.best_params_]
+print(model_score.head())
