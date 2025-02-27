@@ -1,4 +1,6 @@
 # rom mpl_toolkits.mplot3d import Axes3D
+from unittest.mock import inplace
+
 from IPython.core.pylabtools import figsize
 from jedi.api.refactoring import inline
 from matplotlib.pyplot import subplot, subplots, xticks
@@ -10,7 +12,8 @@ import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 import seaborn as sns
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.linear_model import LogisticRegression, RidgeClassifier
-from sklearn.metrics import accuracy_score,classification_report,confusion_matrix,mean_squared_error
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, mean_squared_error, r2_score, \
+    precision_score, recall_score
 import warnings
 warnings.filterwarnings('ignore')
 from imblearn.over_sampling import SMOTE
@@ -112,7 +115,6 @@ balanced_df['Payment_Value'] = balanced_df['PAY_SEPT'] + balanced_df['PAY_AUG'] 
 balanced_df['Dues'] = (balanced_df['BILL_AMT_APR']+balanced_df['BILL_AMT_MAY']+balanced_df['BILL_AMT_JUN']+balanced_df['BILL_AMT_JUL']+balanced_df['BILL_AMT_SEPT'])-(balanced_df['PAY_AMT_APR']+balanced_df['PAY_AMT_MAY']+balanced_df['PAY_AMT_JUN']+balanced_df['PAY_AMT_JUL']+balanced_df['PAY_AMT_AUG']+balanced_df['PAY_AMT_SEPT'])
 df_x_values = balanced_df.drop(['def_pay','Payment_Value', 'Dues'], axis=1)
 df_y_value =balanced_df['def_pay']
-
 std_scaler = StandardScaler() # scale data using a standard scaler
 scaled_x_values = std_scaler.fit_transform(df_x_values)
 
@@ -128,9 +130,35 @@ model_params = {
         }
     }
 } # a dictionary that saves parameters for each model to be tested using "GridSearchCV"
-model_score = pd.DataFrame(columns=["Model Name","Best Score", "Best Params"]) # a dataframe to save score for each model based on parameters
+model_score = pd.DataFrame(columns=["Model Name","Best Score", "Best Params", "Best Score", "Best Estimator", "Accuracy", "Precision", "Recall", "R2-Score"]) # a dataframe to save score for each model based on parameters
 for model_name, mp in model_params.items():
-    clf = GridSearchCV(mp['model'], mp['params'],cv=3, scoring='accuracy', n_jobs=-1, verbose=3) # https://www.youtube.com/watch?v=HdlDYng8g9s and https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html
+    clf = GridSearchCV(mp['model'], mp['params'],cv=3, scoring='accuracy', n_jobs=-1, verbose=1) # https://www.youtube.com/watch?v=HdlDYng8g9s and https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html
     clf.fit(x_train, y_train)
-    model_score.loc[len(model_score)]= [model_name, clf.best_score_, clf.best_params_]
-print(model_score.head())
+    model_score.loc[len(model_score)]= [model_name, clf.best_score_, clf.best_params_, clf.best_score_, clf.best_estimator_, np.NAN, np.NAN, np.NAN, np.NAN]
+
+# <---- testing score for best estimator on linear regression model ---->
+optimized_lr = model_score.iloc[0]['Best Estimator'] # using the best estimator that we got from "GridSearchCV"
+lr_train_predict = optimized_lr.predict(x_train) # predict the y values
+lr_test_predict = optimized_lr.predict(x_test)
+lr_train_accuracy = accuracy_score(lr_train_predict,y_train)
+lr_test_accuracy = accuracy_score(lr_test_predict,y_test)
+model_score.loc[0,'Accuracy']= lr_test_accuracy
+print("The accuracy on train data is ", lr_train_accuracy) # checking the score for training data
+print("The accuracy on test data is ", lr_test_accuracy) # checking the score for testing data
+model_score.loc[0,'R2-Score'] = r2_score(y_test,lr_test_predict)
+model_score.loc[0, 'Precision'] = precision_score(y_test,lr_test_predict)
+model_score.loc[0, 'Recall'] = recall_score(y_test,lr_test_predict)
+print(model_score.to_string())
+
+# <---- Get the confusion matrix for both train and test ----->
+lr_cm = confusion_matrix(y_test, lr_test_predict)
+fig, ax = plt.subplots()
+cm_labels = ['Not Defaulter', 'Defaulter']
+sns.heatmap(lr_cm,annot= True, ax= ax)
+ax.set_xlabel('Predicted labels')
+ax.set_ylabel('True labels')
+ax.set_title('Confusion Matrix')
+ax.xaxis.set_ticklabels(cm_labels)
+ax.yaxis.set_ticklabels(cm_labels)
+plt.show()
+print(lr_cm)
