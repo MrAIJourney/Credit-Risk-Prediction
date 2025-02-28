@@ -15,6 +15,9 @@ from sklearn.linear_model import LogisticRegression, RidgeClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, mean_squared_error, r2_score, \
     precision_score, recall_score
 import warnings
+
+from sklearn.svm import SVC
+
 warnings.filterwarnings('ignore')
 from imblearn.over_sampling import SMOTE
 
@@ -129,14 +132,23 @@ model_params = {
             'C' : [0.001, 0.01, 0.1, 1, 10, 100, 1000]
         }
     }
+    # ,
+    # 'SVC':{
+    #     'model': SVC(probability=True), # https://www.youtube.com/watch?v=efR1C6CvhmE # Support Vector Classifier
+    #     'params':{
+    #         'C': [0.1, 1, 10, 100], # I've tested wit c= [0.1, 1, 10, 100] and best value is 100
+    #         'kernel': ['rbf'] # Using Radial Basis Function to find support vector classifier in infinite dimension
+    #     }
+
+    # }
 } # a dictionary that saves parameters for each model to be tested using "GridSearchCV"
 model_score = pd.DataFrame(columns=["Model Name","Best Score", "Best Params", "Best Score", "Best Estimator", "Accuracy", "Precision", "Recall", "R2-Score"]) # a dataframe to save score for each model based on parameters
 for model_name, mp in model_params.items():
-    clf = GridSearchCV(mp['model'], mp['params'],cv=3, scoring='accuracy', n_jobs=-1, verbose=1) # https://www.youtube.com/watch?v=HdlDYng8g9s and https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html
+    clf = GridSearchCV(mp['model'], mp['params'],cv=3, scoring='accuracy', n_jobs=1, verbose=3) # https://www.youtube.com/watch?v=HdlDYng8g9s and https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html
     clf.fit(x_train, y_train)
     model_score.loc[len(model_score)]= [model_name, clf.best_score_, clf.best_params_, clf.best_score_, clf.best_estimator_, np.NAN, np.NAN, np.NAN, np.NAN]
 
-# <---- testing score for best estimator on linear regression model ---->
+# # <---- testing score for best estimator on linear regression model ---->
 optimized_lr = model_score.iloc[0]['Best Estimator'] # using the best estimator that we got from "GridSearchCV"
 lr_train_predict = optimized_lr.predict(x_train) # predict the y values
 lr_test_predict = optimized_lr.predict(x_test)
@@ -152,13 +164,24 @@ print(model_score.to_string())
 
 # <---- Get the confusion matrix for both train and test ----->
 lr_cm = confusion_matrix(y_test, lr_test_predict)
-fig, ax = plt.subplots()
-cm_labels = ['Not Defaulter', 'Defaulter']
-sns.heatmap(lr_cm,annot= True, ax= ax)
-ax.set_xlabel('Predicted labels')
-ax.set_ylabel('True labels')
-ax.set_title('Confusion Matrix')
-ax.xaxis.set_ticklabels(cm_labels)
-ax.yaxis.set_ticklabels(cm_labels)
-plt.show()
-print(lr_cm)
+# fig, ax = plt.subplots()
+# cm_labels = ['Not Defaulter', 'Defaulter']
+# sns.heatmap(lr_cm,annot= True, ax= ax)
+# ax.set_xlabel('Predicted labels')
+# ax.set_ylabel('True labels')
+# ax.set_title('Confusion Matrix')
+# ax.xaxis.set_ticklabels(cm_labels)
+# ax.yaxis.set_ticklabels(cm_labels)
+# plt.show()
+# print(lr_cm)
+
+# <---- Implementing SVC ----> https://www.youtube.com/watch?v=efR1C6CvhmE
+svc = SVC(C=100, kernel='rbf') # I've found out using "GridSearchCV" that this is the best SVC model
+svc.fit(x_train,y_train)
+print(svc)
+svc_test_predict = svc.predict(x_test)
+accuracy= accuracy_score(y_test,svc_test_predict)
+r2 = r2_score(y_test,svc_test_predict)
+precision = precision_score(y_test,svc_test_predict)
+recal = recall_score(y_test,svc_test_predict)
+print(f'Accouracy= {accuracy}\nR2= {r2}\nPrecision = {precision}\n Recall= {recal}')
