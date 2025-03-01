@@ -1,5 +1,5 @@
 # rom mpl_toolkits.mplot3d import Axes3D
-from unittest.mock import inplace
+# from unittest.mock import inplace
 
 from IPython.core.pylabtools import figsize
 from jedi.api.refactoring import inline
@@ -17,6 +17,7 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 import warnings
 
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 
 warnings.filterwarnings('ignore')
 from imblearn.over_sampling import SMOTE
@@ -131,6 +132,13 @@ model_params = {
             'penalty':['l1','l2'],
             'C' : [0.001, 0.01, 0.1, 1, 10, 100, 1000]
         }
+    },
+    'Decision Treee':{
+        'model':DecisionTreeClassifier(),
+        'params':{
+            'max_depth': [20,30,50,100],
+            'min_samples_split':[0.1,0.2,0.4]
+        }
     }
     # ,
     # 'SVC':{
@@ -146,7 +154,7 @@ model_score = pd.DataFrame(columns=["Model Name","Best Score", "Best Params", "B
 for model_name, mp in model_params.items():
     clf = GridSearchCV(mp['model'], mp['params'],cv=3, scoring='accuracy', n_jobs=1, verbose=3) # https://www.youtube.com/watch?v=HdlDYng8g9s and https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html
     clf.fit(x_train, y_train)
-    model_score.loc[len(model_score)]= [model_name, clf.best_score_, clf.best_params_, clf.best_score_, clf.best_estimator_, np.NAN, np.NAN, np.NAN, np.NAN]
+    model_score.loc[len(model_score)]= [model_name, clf.best_score_, clf.best_params_, clf.best_score_, clf.best_estimator_, np.nan, np.nan, np.nan, np.nan]
 
 # # <---- testing score for best estimator on linear regression model ---->
 optimized_lr = model_score.iloc[0]['Best Estimator'] # using the best estimator that we got from "GridSearchCV"
@@ -176,12 +184,21 @@ lr_cm = confusion_matrix(y_test, lr_test_predict)
 # print(lr_cm)
 
 # <---- Implementing SVC ----> https://www.youtube.com/watch?v=efR1C6CvhmE
-svc = SVC(C=100, kernel='rbf') # I've found out using "GridSearchCV" that this is the best SVC model
-svc.fit(x_train,y_train)
-print(svc)
-svc_test_predict = svc.predict(x_test)
-accuracy= accuracy_score(y_test,svc_test_predict)
-r2 = r2_score(y_test,svc_test_predict)
-precision = precision_score(y_test,svc_test_predict)
-recal = recall_score(y_test,svc_test_predict)
-print(f'Accouracy= {accuracy}\nR2= {r2}\nPrecision = {precision}\n Recall= {recal}')
+# svc = SVC(C=100, kernel='rbf') # I've found out using "GridSearchCV" that this is the best SVC model
+# svc.fit(x_train,y_train)
+# print(svc)
+# svc_test_predict = svc.predict(x_test)
+# accuracy= accuracy_score(y_test,svc_test_predict)
+# r2 = r2_score(y_test,svc_test_predict)
+# precision = precision_score(y_test,svc_test_predict)
+# recal = recall_score(y_test,svc_test_predict)
+# print(f'Accouracy= {accuracy}\nR2= {r2}\nPrecision = {precision}\n Recall= {recal}')
+
+# <---- Implementing Decision Tree Classifier ---->
+dtc_predict = model_score.loc[1,'Best Estimator'].predict(x_test)
+model_score.loc[1,'Accuracy'] = accuracy_score(y_test,dtc_predict)
+model_score.loc[1, 'R2-Score']= r2_score(y_test,dtc_predict)
+model_score.loc[1, 'Precision']= precision_score(y_test,dtc_predict)
+model_score.loc[1, 'Recall']= recall_score(y_test,dtc_predict)
+print(dtc_predict)
+print(model_score.to_string())
