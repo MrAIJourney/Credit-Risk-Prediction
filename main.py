@@ -1,9 +1,11 @@
 # rom mpl_toolkits.mplot3d import Axes3D
 # from unittest.mock import inplace
+import pickle
 
 from IPython.core.pylabtools import figsize
 from jedi.api.refactoring import inline
 from matplotlib.pyplot import subplot, subplots, xticks
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt # plotting
 import numpy as np # linear algebra
@@ -126,20 +128,27 @@ x_train, x_test, y_train, y_test = train_test_split(scaled_x_values, df_y_value,
 
 # <---- Findig the best parameters for model using "GridSearchCV" ---->
 model_params = {
-    'linear_regression':{
-        'model': LogisticRegression(),
-        'params':{
-            'penalty':['l1','l2'],
-            'C' : [0.001, 0.01, 0.1, 1, 10, 100, 1000]
-        }
-    },
-    'Decision Treee':{
-        'model':DecisionTreeClassifier(),
-        'params':{
-            'max_depth': [20,30,50,100],
-            'min_samples_split':[0.1,0.2,0.4]
-        }
-    }
+    # 'linear_regression':{
+    #     'model': LogisticRegression(),
+    #     'params':{
+    #         'penalty':['l1','l2'],
+    #         'C' : [0.001, 0.01, 0.1, 1, 10, 100, 1000]
+    #     }
+    # },
+    # 'Decision Treee':{
+    #     'model':DecisionTreeClassifier(),
+    #     'params':{
+    #         'max_depth': [20,30,50,100],
+    #         'min_samples_split':[0.1,0.2,0.4]
+    #     }
+    # },
+    # 'Random Forest':{
+    #     'model': RandomForestClassifier(),
+    #     'params':{
+    #         'n_estimators': [100,150,200],
+    #         'max_depth': [10,20,30]
+    #     }
+    # }
     # ,
     # 'SVC':{
     #     'model': SVC(probability=True), # https://www.youtube.com/watch?v=efR1C6CvhmE # Support Vector Classifier
@@ -154,21 +163,31 @@ model_score = pd.DataFrame(columns=["Model Name","Best Score", "Best Params", "B
 for model_name, mp in model_params.items():
     clf = GridSearchCV(mp['model'], mp['params'],cv=3, scoring='accuracy', n_jobs=1, verbose=3) # https://www.youtube.com/watch?v=HdlDYng8g9s and https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html
     clf.fit(x_train, y_train)
-    model_score.loc[len(model_score)]= [model_name, clf.best_score_, clf.best_params_, clf.best_score_, clf.best_estimator_, np.nan, np.nan, np.nan, np.nan]
+    model_score.loc[0]= [model_name, clf.best_score_, clf.best_params_, clf.best_score_, clf.best_estimator_, np.nan, np.nan, np.nan, np.nan]
 
 # # <---- testing score for best estimator on linear regression model ---->
-optimized_lr = model_score.iloc[0]['Best Estimator'] # using the best estimator that we got from "GridSearchCV"
+# optimized_lr = model_score.iloc[0]['Best Estimator'] # using the best estimator that we got from "GridSearchCV"
+# <---- saving tht model into a file for later use ( so we don't need to train the model every time)
+lr_save_name = 'lr_optimized_classifier.pkl'
+# with open(lr_save_name, 'wb') as file: # using 'wb' to write to file as binary
+#     pickle.dump(optimized_lr, file)
+
+with open(lr_save_name, 'rb') as file: # using 'rb' to read to file as binary
+    optimized_lr = pickle.load(file) # loading the model
 lr_train_predict = optimized_lr.predict(x_train) # predict the y values
 lr_test_predict = optimized_lr.predict(x_test)
 lr_train_accuracy = accuracy_score(lr_train_predict,y_train)
 lr_test_accuracy = accuracy_score(lr_test_predict,y_test)
+model_score.loc[0,'Model Name']= "linear_regression"
+model_score.iloc[0]['Best Estimator']= optimized_lr
+model_score.iloc[0]['Best Params']= optimized_lr.get_params()
 model_score.loc[0,'Accuracy']= lr_test_accuracy
 print("The accuracy on train data is ", lr_train_accuracy) # checking the score for training data
 print("The accuracy on test data is ", lr_test_accuracy) # checking the score for testing data
 model_score.loc[0,'R2-Score'] = r2_score(y_test,lr_test_predict)
 model_score.loc[0, 'Precision'] = precision_score(y_test,lr_test_predict)
 model_score.loc[0, 'Recall'] = recall_score(y_test,lr_test_predict)
-print(model_score.to_string())
+# print(model_score.to_string())
 
 # <---- Get the confusion matrix for both train and test ----->
 lr_cm = confusion_matrix(y_test, lr_test_predict)
@@ -184,21 +203,62 @@ lr_cm = confusion_matrix(y_test, lr_test_predict)
 # print(lr_cm)
 
 # <---- Implementing SVC ----> https://www.youtube.com/watch?v=efR1C6CvhmE
-# svc = SVC(C=100, kernel='rbf') # I've found out using "GridSearchCV" that this is the best SVC model
-# svc.fit(x_train,y_train)
-# print(svc)
-# svc_test_predict = svc.predict(x_test)
-# accuracy= accuracy_score(y_test,svc_test_predict)
-# r2 = r2_score(y_test,svc_test_predict)
-# precision = precision_score(y_test,svc_test_predict)
-# recal = recall_score(y_test,svc_test_predict)
-# print(f'Accouracy= {accuracy}\nR2= {r2}\nPrecision = {precision}\n Recall= {recal}')
+# optimized_svc = SVC(C=100, kernel='rbf') # I've found out using "GridSearchCV" that this is the best SVC model
+# optimized_svc.fit(x_train,y_train)
+# <---- saving tht model into a file for later use ( so we don't need to train the model every time)
+svc_save_name = 'svc_optimized_classifier.pkl'
+# with open(svc_save_name, 'wb') as file: # using 'wb' to write to file as binary
+#     pickle.dump(optimized_svc, file)
 
-# <---- Implementing Decision Tree Classifier ---->
-dtc_predict = model_score.loc[1,'Best Estimator'].predict(x_test)
-model_score.loc[1,'Accuracy'] = accuracy_score(y_test,dtc_predict)
-model_score.loc[1, 'R2-Score']= r2_score(y_test,dtc_predict)
-model_score.loc[1, 'Precision']= precision_score(y_test,dtc_predict)
-model_score.loc[1, 'Recall']= recall_score(y_test,dtc_predict)
-print(dtc_predict)
+with open(svc_save_name, 'rb') as file: # using 'rb' to read to file as binary
+    optimized_svc = pickle.load(file) # loading the model
+
+model_score.loc[1,'Model Name']= "SVC"
+model_score.iloc[1]['Best Estimator']= optimized_svc
+model_score.iloc[1]['Best Params']= optimized_svc.get_params()
+svc_test_predict = optimized_svc.predict(x_test)
+model_score.iloc[1]['Accuracy']= accuracy_score(y_test,svc_test_predict)
+model_score.iloc[1]['R2-Score'] = r2_score(y_test,svc_test_predict)
+model_score.iloc[1]['Precision'] = precision_score(y_test,svc_test_predict)
+model_score.iloc[1]['Recall'] = recall_score(y_test,svc_test_predict)
+print(model_score.to_string())
+# # <---- Implementing Decision Tree Classifier ---->
+# optimized_dtc = model_score.loc[0,'Best Estimator']
+# <---- saving tht model into a file for later use ( so we don't need to train the model every time)
+dtc_save_name = 'dtc_optimized_classifier.pkl'
+# with open(dtc_save_name, 'wb') as file: # using 'wb' to write to file as binary
+#     pickle.dump(optimized_dtc, file)
+
+with open(dtc_save_name, 'rb') as file: # using 'rb' to read to file as binary
+    optimized_dtc = pickle.load(file) # loading the model
+
+model_score.loc[2,'Model Name']= "Decision Tree Classifier"
+model_score.iloc[2]['Best Estimator']= optimized_dtc
+model_score.iloc[2]['Best Params']= optimized_dtc.get_params()
+dtc_predict = optimized_dtc.predict(x_test)
+model_score.loc[2,'Accuracy'] = accuracy_score(y_test,dtc_predict)
+model_score.loc[2, 'R2-Score']= r2_score(y_test,dtc_predict)
+model_score.loc[2, 'Precision']= precision_score(y_test,dtc_predict)
+model_score.loc[2, 'Recall']= recall_score(y_test,dtc_predict)
+# # print(model_score.to_string())
+#
+# # <---- Implementing Random Forrest ---->
+# print(model_score.loc[2,'Best Estimator'])
+# optimized_rf= model_score.loc[0,'Best Estimator']
+# <---- saving tht model into a file for later use ( so we don't need to train the model every time)
+rf_save_name = 'rf_optimized_classifier.pkl'
+# with open(rf_save_name, 'wb') as file: # using 'wb' to write to file as binary
+#     pickle.dump(optimized_rf, file)
+
+with open(rf_save_name, 'rb') as file: # using 'rb' to read to file as binary
+    optimized_rf = pickle.load(file) # loading the model
+
+model_score.loc[3,'Model Name']= "Random Forrest"
+model_score.iloc[3]['Best Estimator']= optimized_rf
+model_score.iloc[3]['Best Params']= optimized_rf.get_params()
+rf_predict = model_score.loc[3,'Best Estimator'].predict(x_test)
+model_score.loc[3,'Accuracy'] = accuracy_score(y_test,rf_predict)
+model_score.loc[3, 'R2-Score']= r2_score(y_test,rf_predict)
+model_score.loc[3, 'Precision']= precision_score(y_test,rf_predict)
+model_score.loc[3, 'Recall']= recall_score(y_test,rf_predict)
 print(model_score.to_string())
