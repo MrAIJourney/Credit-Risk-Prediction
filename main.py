@@ -5,6 +5,7 @@ import pickle
 from IPython.core.pylabtools import figsize
 from jedi.api.refactoring import inline
 from matplotlib.pyplot import subplot, subplots, xticks
+from scipy.ndimage import rotate
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt # plotting
@@ -262,3 +263,10 @@ model_score.loc[3, 'R2-Score']= r2_score(y_test,rf_predict)
 model_score.loc[3, 'Precision']= precision_score(y_test,rf_predict)
 model_score.loc[3, 'Recall']= recall_score(y_test,rf_predict)
 print(model_score.to_string())
+
+# <---- Using feature selection tool "feature_importance" to order features based on their importance ---->
+feature_importance_rf = pd.DataFrame(optimized_rf.feature_importances_,index=df_x_values.columns, columns=['importance_rf']).sort_values('importance_rf', ascending=False)
+plt.title('Feature Importance')
+plt.bar(feature_importance_rf.index, feature_importance_rf['importance_rf'], color= 'g', align="center")
+plt.xticks(feature_importance_rf.index, rotation= 85)
+plt.show()
