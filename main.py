@@ -2,6 +2,8 @@
 # from unittest.mock import inplace
 import pickle
 
+import graphviz
+from IPython.core.display_functions import display
 from IPython.core.pylabtools import figsize
 from jedi.api.refactoring import inline
 from matplotlib.pyplot import subplot, subplots, xticks
@@ -20,7 +22,9 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 import warnings
 
 from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, export_graphviz
+from graphviz import Source
+
 
 warnings.filterwarnings('ignore')
 from imblearn.over_sampling import SMOTE
@@ -223,6 +227,7 @@ model_score.iloc[1]['R2-Score'] = r2_score(y_test,svc_test_predict)
 model_score.iloc[1]['Precision'] = precision_score(y_test,svc_test_predict)
 model_score.iloc[1]['Recall'] = recall_score(y_test,svc_test_predict)
 print(model_score.to_string())
+
 # # <---- Implementing Decision Tree Classifier ---->
 # optimized_dtc = model_score.loc[0,'Best Estimator']
 # <---- saving tht model into a file for later use ( so we don't need to train the model every time)
@@ -241,9 +246,18 @@ model_score.loc[2,'Accuracy'] = accuracy_score(y_test,dtc_predict)
 model_score.loc[2, 'R2-Score']= r2_score(y_test,dtc_predict)
 model_score.loc[2, 'Precision']= precision_score(y_test,dtc_predict)
 model_score.loc[2, 'Recall']= recall_score(y_test,dtc_predict)
-# # print(model_score.to_string())
-#
-# # <---- Implementing Random Forrest ---->
+# print(model_score.to_string())
+
+# <---- Evaluating the decision tree ---->
+print(classification_report(y_test, dtc_predict))
+# <---- Visualizing the decision tree ---->
+tree_data = export_graphviz(optimized_dtc, out_file='dtree.dot', feature_names=df_x_values.columns, class_names=['Low Risk', 'High Risk'], filled=True)
+with open('dtree.dot') as file:
+    dot_graph = file.read()
+graph = Source(dot_graph)
+graph.render('decision tree')
+
+# <---- Implementing Random Forrest ---->
 # print(model_score.loc[2,'Best Estimator'])
 # optimized_rf= model_score.loc[0,'Best Estimator']
 # <---- saving tht model into a file for later use ( so we don't need to train the model every time)
@@ -262,11 +276,12 @@ model_score.loc[3,'Accuracy'] = accuracy_score(y_test,rf_predict)
 model_score.loc[3, 'R2-Score']= r2_score(y_test,rf_predict)
 model_score.loc[3, 'Precision']= precision_score(y_test,rf_predict)
 model_score.loc[3, 'Recall']= recall_score(y_test,rf_predict)
-print(model_score.to_string())
+# print(model_score.to_string())
 
 # <---- Using feature selection tool "feature_importance" to order features based on their importance ---->
-feature_importance_rf = pd.DataFrame(optimized_rf.feature_importances_,index=df_x_values.columns, columns=['importance_rf']).sort_values('importance_rf', ascending=False)
-plt.title('Feature Importance')
-plt.bar(feature_importance_rf.index, feature_importance_rf['importance_rf'], color= 'g', align="center")
-plt.xticks(feature_importance_rf.index, rotation= 85)
-plt.show()
+# feature_importance_rf = pd.DataFrame(optimized_rf.feature_importances_,index=df_x_values.columns, columns=['importance_rf']).sort_values('importance_rf', ascending=False)
+# plt.title('Feature Importance')
+# plt.bar(feature_importance_rf.index, feature_importance_rf['importance_rf'], color= 'g', align="center")
+# plt.xticks(feature_importance_rf.index, rotation= 85)
+# plt.show()
+
